@@ -1,53 +1,43 @@
 import throttle from 'lodash.throttle';
 
-const form = document.querySelector('.feedback-form');
-const email = document.querySelector('.feedback-form input[name=email]');
-const textArea = document.querySelector(
-  '.feedback-form textarea[name=message]'
-);
-const storage = {};
-const KEY = 'feedback-form-state';
+const inputForm = document.querySelector('.feedback-form');
+const email = document.querySelector('.feedback-form input');
+const message = document.querySelector('.feedback-form textarea');
 
-form.addEventListener('input', throttle(currentOnForm, 500));
-form.addEventListener('submit', onSubmitForm);
+const STORAGE_KEY = 'feedback-form-state';
+let formData = {};
 
-function currentOnForm(e) {
-  const keyStorage = e.target.name;
-  storage[keyStorage] = e.target.value;
+inputForm.addEventListener('submit', onFormSubmit);
+inputForm.addEventListener('input', throttle(onFormData, 500));
 
-  localStorage.setItem(KEY, JSON.stringify(storage));
+fillingTextarea();
+
+function onFormSubmit(event) {
+  event.preventDefault();
+
+  const { email, message } = event.currentTarget;
+  const formInput = {
+    email: email.value,
+    message: message.value,
+  };
+
+  console.log(formInput);
+  event.currentTarget.reset();
+  localStorage.removeItem(STORAGE_KEY);
 }
 
-function setCurrentState(key) {
-  const parseStorage = JSON.parse(localStorage.getItem(key));
+function onFormData(event) {
+  formData[event.target.name] = event.target.value;
 
-  if (parseStorage !== null) {
-    if (parseStorage.email !== undefined) {
-      email.value = parseStorage.email;
-    }
-    if (parseStorage.message !== undefined) {
-      textArea.value = parseStorage.message;
-    }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+}
+
+function fillingTextarea() {
+  const savedMessage = localStorage.getItem(STORAGE_KEY);
+
+  if (savedMessage) {
+    formData = JSON.parse(savedMessage);
+    email.value = formData.email;
+    message.value = formData.message;
   }
 }
-
-function onSubmitForm(e) {
-  if (
-    storage.email === undefined ||
-    storage.message === undefined ||
-    storage.email.trim() === '' ||
-    storage.message.trim() === ''
-  ) {
-    alert('Для відправки форми усі поля мають бути заповнені');
-    return;
-  }
-  e.preventDefault();
-  form.reset();
-  localStorage.removeItem(KEY);
-  console.log(storage);
-  delete storage.email;
-  delete storage.message;
-}
-
-setCurrentState(KEY);
-// setCurrentState(KEY);
